@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title></title>
+	<script type="text/javascript" src="http://cdnjs.cloudflare.com/ajax/libs/knockout/3.1.0/knockout-min.js"></script>
+	<script type="text/javascript" src="http://code.jquery.com/jquery-2.1.0.min.js"></script>
+	<script type="text/javascript" src="jquery.xmlrpc.min.js"></script>
+	<script type="text/javascript" src="fileDownload.js"></script>
+	<script type="text/javascript" src="main.js"></script>
+</head>
+<body>
+<ul data-bind="foreach: breadcrumb, visible: breadcrumb().length > 0">
+	<li>
+		<span data-bind="text: name, click:$parent.explore"></span> /
+	</li>
+</ul>
+<ul data-bind="foreach: files, visible: files().length > 0">
+	<li>
+		<span data-bind="visible: is_dir(), click:$parent.explore">directory</span>
+		<span data-bind="visible: !is_dir(), click:$parent.downloadFile">File</span>
+		<span data-bind="visible: opensubtitles_hash(), click:$parent.downloadSubTitles">Subtitles</span>
+		<span data-bind="text: name"></span>
+	</li>
+</ul>
+
+</body>
+</html>
