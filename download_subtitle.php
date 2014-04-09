@@ -1,30 +1,19 @@
 <?php
+error_reporting(E_ALL);
+ini_set('display_errors','On');
+use OpenSubtitles\SubtitlesManager;
+
+require 'config/config.php';
+
 $movie_name = $_GET['name'];
 $language = $_GET['language'];
 $moviehash = $_GET['moviehash'];
-$token = $_GET['token'];
 $moviesize = $_GET['moviesize'];
 
-$request = xmlrpc_encode_request(
-    "SearchSubtitles",
-    array(
-        $token,
-        array(
-            array('sublanguageid' => $language, 'moviehash' => $moviehash, 'moviebytesize' => $moviesize)
-        )
-    )
-);
-$context = stream_context_create(
-    array(
-        'http' => array(
-            'method' => "POST",
-            'header' => "Content-Type: text/xml",
-            'content' => $request
-        )
-    )
-);
-$file = file_get_contents('http://api.opensubtitles.org/xml-rpc', false, $context);
-$response = xmlrpc_decode($file);
+$subtitle_manager = New SubtitlesManager('', '', $language, OS_USER_AGENT);
+
+$token = $subtitle_manager->Login();
+$response = $subtitle_manager->searchSubtitles($token, $moviehash, $moviesize);
 
 foreach ($response['data'] as $data) {
     if ($data['MovieReleaseName'] != $movie_name) {

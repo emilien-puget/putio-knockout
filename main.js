@@ -31,8 +31,20 @@ $(function () {
         self.parent = new File({id: -1});
         self.current = new File({id: 0, name: 'home'});
         self.account_info = [];
+        self.query = ko.observable("");
 
         self.access_token = getAccessToken();
+
+        self.filtered_files = ko.computed(function (){
+            var search = self.query().trim();
+
+            if (!search)
+                return self.files();
+            return ko.utils.arrayFilter(self.files(), function (file)
+            {
+                return (file.name().toLowerCase().indexOf(search) >= 0);
+            });
+        });
 
         self.downloadFile = function () {
             window.location = 'https://api.put.io/v2/files/' + this.id() + '/download?oauth_token=' + self.access_token;
@@ -50,7 +62,7 @@ $(function () {
             $.ajax({
                 type: "GET",
                 url: 'download_subtitle.php',
-                data: {token: self.account_info.token, name: name, language: self.account_info.default_subtitle_language, moviehash: current_item.opensubtitles_hash(), moviesize: current_item.size()},
+                data: {name: name, language: self.account_info.default_subtitle_language, moviehash: current_item.opensubtitles_hash(), moviesize: current_item.size()},
                 success: function (data) {
                     console.log(data);
                     if (data)
@@ -93,18 +105,6 @@ $(function () {
 
         $.getJSON('https://api.put.io/v2/account/info?oauth_token=' + self.access_token, function (data) {
             self.account_info = data.info;
-            $.xmlrpc({
-                url: 'http://api.opensubtitles.org/xml-rpc',
-                methodName: 'LogIn',
-                async: false,
-                params: ['', '', self.account_info.default_subtitle_language, 'epputio'],
-                success: function (response) {
-                    self.account_info.token = response[0].token;
-                },
-                error: function (jqXHR, status, error) {
-                    console.error('shit happened');
-                }
-            });
         });
     }
 
