@@ -34,7 +34,7 @@
                 <button class="btn btn-default" data-bind="visible: is_dir(), click:$parent.explore">
                     Go to directory
                 </button>
-                <a href="tutu" class="btn btn-default" data-bind="visible: !is_dir(), click:$parent.downloadFile">
+                <a class="btn btn-default" data-bind="visible: !is_dir(), click:$parent.downloadFile, attr: {href: link_url}">
                     Download file
                 </a>
             </td>

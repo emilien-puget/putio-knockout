@@ -12,7 +12,7 @@ $(function () {
 
         this.id = ko.observable(data.id);
         this.name = ko.observable(data.name);
-        this.link_url = ko.observable(data.link_url);
+        this.link_url = ko.observable('https://api.put.io/v2/files/' + data.id + '/download?oauth_token=' + getAccessToken());
         this.opensubtitles_hash = ko.observable(data.opensubtitles_hash);
         this.size = ko.observable(data.size);
         this.created_at = ko.observable(data.created_at);
