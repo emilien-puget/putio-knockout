@@ -8,6 +8,11 @@ $(function () {
         return access_token_url.split('=')[1];
     }
 
+    function Language(data){
+        this.name = ko.observable(data.name);
+        this.iso = ko.observable(data.iso);
+    }
+
     function File(data) {
 
         this.id = ko.observable(data.id);
@@ -32,6 +37,8 @@ $(function () {
         self.current = new File({id: 0, name: 'home'});
         self.account_info = [];
         self.query = ko.observable("");
+        self.current_iso_language = ko.observable(localStorage['current_iso_language']);
+        self.languages = ko.observableArray([new Language({name: 'english', iso:'eng'}), new Language({name: 'french', iso:'fre'})]);
 
         self.access_token = getAccessToken();
 
@@ -46,12 +53,15 @@ $(function () {
             });
         });
 
+        self.languageChanged = function(event){
+            localStorage['current_iso_language'] = event.current_iso_language();
+        };
+
         self.downloadFile = function () {
             window.location = 'https://api.put.io/v2/files/' + this.id() + '/download?oauth_token=' + self.access_token;
         };
 
         self.downloadSubTitles = function () {
-
             var current_item = this;
 
             var name = current_item.name();
@@ -62,14 +72,12 @@ $(function () {
             $.ajax({
                 type: "GET",
                 url: 'download_subtitle.php',
-                data: {name: name, language: self.account_info.default_subtitle_language, moviehash: current_item.opensubtitles_hash(), moviesize: current_item.size()},
+                data: {name: name, language: self.current_iso_language(), moviehash: current_item.opensubtitles_hash(), moviesize: current_item.size()},
                 success: function (data) {
-                    console.log(data);
                     if (data)
                         window.location = data;
                     else {
-                        //TODO : error handling 'no subtitles found'
-                        console.info('no subtitles found');
+                        $("#no_subtitles_modal").modal('show');
                     }
                 }
             });
@@ -95,6 +103,9 @@ $(function () {
             });
         };
 
+        /*
+        init knockout
+         */
         $.getJSON('https://api.put.io/v2/files/list?oauth_token=' + self.access_token, function (data) {
             var mappedFiles = $.map(data.files, function (item) {
                 return new File(item)
@@ -102,11 +113,17 @@ $(function () {
             self.files(mappedFiles);
         });
 
-
         $.getJSON('https://api.put.io/v2/account/info?oauth_token=' + self.access_token, function (data) {
             self.account_info = data.info;
+            if (localStorage.getItem('current_iso_language') === null)
+                self.current_iso_language = ko.observable(data.info.default_subtitle_language);
+            else
+                self.current_iso_language = ko.observable(localStorage['current_iso_language']);
         });
+
     }
 
     ko.applyBindings(new FileListViewModel());
+
+    $(".selectpicker").selectpicker();
 });
