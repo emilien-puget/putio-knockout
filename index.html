@@ -44,9 +44,12 @@
                 <button class="btn btn-default" data-bind="visible: is_dir(), click:$parent.explore">
                     Go to directory
                 </button>
-                <a class="btn btn-default" data-bind="visible: !is_dir(), click:$parent.downloadFile, attr: {href: link_url}">
+                <a class="btn btn-default" data-bind="visible: !is_shared() && !is_dir(), click:$parent.downloadFile, attr: {href: link_url}">
                     Download file
                 </a>
+				<p data-bind="visible: is_shared()">
+					shared
+				</p>
             </td>
             <td class="text-center col-md-2" >
                 <button class="btn btn-default"

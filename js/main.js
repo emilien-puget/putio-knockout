@@ -22,6 +22,7 @@ $(function () {
         this.size = ko.observable(data.size);
         this.created_at = ko.observable(data.created_at);
         this.parent_id = ko.observable(data.parent_id);
+		this.is_shared = ko.observable(data.is_shared);
 
         if (data.content_type == "application/x-directory")
             this.is_dir = ko.observable(1);
