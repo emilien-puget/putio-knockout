@@ -35,11 +35,12 @@ $(function () {
         self.files = ko.observableArray();
         self.breadcrumb = ko.observableArray([new File({id: 0, name: 'home'})]);
         self.parent = new File({id: -1});
-        self.current = new File({id: 0, name: 'home'});
+        self.current = new File({id: 0, name: 'home', content_type: "application/x-directory"});
         self.account_info = [];
         self.query = ko.observable("");
         self.current_iso_language = ko.observable(localStorage['current_iso_language']);
         self.languages = ko.observableArray([new Language({name: 'english', iso:'eng'}), new Language({name: 'french', iso:'fre'})]);
+        self.is_loading = ko.observable(true);
 
         self.access_token = getAccessToken();
 
@@ -84,6 +85,16 @@ $(function () {
             });
         };
 
+        self.new_folder_name = ko.observable();
+        self.createNewFolder = function () {
+            if (self.new_folder_name() != '') {
+                $.post('https://api.put.io/v2/files/create-folder', {oauth_token: self.access_token, name: self.new_folder_name(), parent_id: self.current.id()}, function (data) {
+                    var file = new File(data.file);
+                    self.files.unshift(file);
+                    $('#create_folder_modal').modal('hide');
+                });
+            }
+        };
 
         self.explore = function () {
 
@@ -95,22 +106,46 @@ $(function () {
                 self.breadcrumb.push(this);
             }
 
+            self.parent = self.current;
+            self.current = this;
             self.files.removeAll();
+            $("#loading").modal('show');
+            self.is_loading(true);
             $.getJSON('https://api.put.io/v2/files/list', {oauth_token: self.access_token, parent_id: this.id()}, function (data) {
+                self.is_loading(false);
+                $("#loading").modal('hide');
+
                 var mappedFiles = $.map(data.files, function (item) {
                     return new File(item)
                 });
                 self.files(mappedFiles);
+//                self.files.unshift(self.parent); TODO : parent at top
+            });
+        };
+
+        self.move_file = new File({id:-1});
+        self.save = function (data, context) {
+            console.log(data);console.log(context);
+
+            self.move_file = data.$data;
+        };
+
+        self.dropped = function (data, context) {
+            $.post('https://api.put.io/v2/files/move', {oauth_token: self.access_token, parent_id: context.$data.id(), file_ids:self.move_file.id()}, function(data){
+                self.files.remove(self.move_file);
             });
         };
 
         /*
         init knockout
          */
+        $("#loading").modal('show');
         $.getJSON('https://api.put.io/v2/files/list?oauth_token=' + self.access_token, function (data) {
             var mappedFiles = $.map(data.files, function (item) {
                 return new File(item)
             });
+            $("#loading").modal('hide');
+            self.is_loading(false);
             self.files(mappedFiles);
         });
 
@@ -122,6 +157,39 @@ $(function () {
                 self.current_iso_language = ko.observable(localStorage['current_iso_language']);
         });
 
+        ko.bindingHandlers.drag = {
+            init: function(element, valueAccessor, allBindingsAccessor,
+                           viewModel, context) {
+                var value = valueAccessor();
+                $(element).draggable({
+                    containment: 'window',
+                    helper: function(evt, ui) {
+                        var h = $(element).clone().css({
+                            width: $(element).width(),
+                            height: $(element).height()
+                        });
+                        h.data('ko.draggable.data', value(context, evt));
+                        return h;
+                    },
+                    appendTo: 'body'
+                });
+            }
+        };
+
+        ko.bindingHandlers.drop = {
+            init: function(element, valueAccessor, allBindingsAccessor,
+                           viewModel, context) {
+                var value = valueAccessor();
+                $(element).droppable({
+                    tolerance: 'pointer',
+                    hoverClass: 'dragHover',
+                    activeClass: 'dragActive',
+                    drop: function(evt, ui) {
+                        value(ui.helper.data('ko.draggable.data'), context);
+                    }
+                });
+            }
+        };
     }
 
     ko.applyBindings(new FileListViewModel());

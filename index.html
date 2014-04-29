@@ -3,28 +3,63 @@
 <head>
     <title></title>
     <script type="text/javascript" src="http://code.jquery.com/jquery-2.1.0.min.js"></script>
+    <script type="text/javascript" src="http://code.jquery.com/ui/1.10.4/jquery-ui.min.js"></script>
     <script type="text/javascript" src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
-    <script type="text/javascript" src="http://cdnjs.cloudflare.com/ajax/libs/knockout/3.1.0/knockout-min.js"></script>
+    <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/knockout/3.1.0/knockout-min.js"></script>
     <script type="text/javascript" src="js/bootstrap-select.min.js"></script>
     <script type="text/javascript" src="js/main.js"></script>
     <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
     <link rel="stylesheet" href="css/bootstrap-select.min.css">
+    <link rel="stylesheet" href="css/main.css">
 </head>
 <body>
-<div class="container">
-    <ol class="breadcrumb" data-bind="foreach: breadcrumb, visible: breadcrumb().length > 0">
-        <li><a href="#" data-bind="text: name, click:$parent.explore"></a></li>
-    </ol>
+<div class="container" id="wrapper">
+    <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
+        <div class="container">
 
-    <select data-live-search="true" class="selectpicker" style="display: none;"
-            data-bind="options: languages,
-                       optionsText: 'name',
-                       optionsValue: 'iso',
-                       value: current_iso_language,
-                       event:{change: languageChanged}">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#navbar-collapse">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+            </div>
+            <div class="collapse navbar-collapse" id="navbar-collapse">
+                <ul class="breadcrumb" data-bind="foreach: breadcrumb, visible: breadcrumb().length > 0">
+                    <li><a href="#" data-bind="text: name, click:$parent.explore"></a></li>
+                </ul>
 
-    </select>
-    <table class="table table-striped table-hover">
+                <ul class="nav navbar-nav navbar-right">
+                    <li>
+                        <button type="button" class="btn btn-default navbar-btn" data-toggle="modal"
+                                data-target="#create_folder_modal">Create new folder
+                        </button>
+                    </li>
+                    <li>
+                        <form class="navbar-form navbar-right">
+                            <select data-live-search="true" class="selectpicker" style="display: none;"
+                                    data-bind="options: languages,
+                                               optionsText: 'name',
+                                               optionsValue: 'iso',
+                                               value: current_iso_language,
+                                               event:{change: languageChanged}"
+                                    >
+
+                            </select>
+                        </form>
+                    </li>
+                </ul>
+            </div>
+
+
+        </div>
+    </nav>
+    <div id="body">
+    <p data-bind="visible: filtered_files().length == 0 && !is_loading()">
+        nothing to see here
+    </p>
+    <table class="table table-striped table-hover" data-bind="visible: filtered_files().length > 0">
         <thead>
         <tr>
             <td></td>
@@ -38,8 +73,9 @@
             </td>
         </tr>
         </thead>
-        <tbody data-bind="foreach: filtered_files, visible: filtered_files().length > 0">
-        <tr>
+
+        <tbody data-bind="foreach: filtered_files">
+        <tr data-bind="drag: $parent.save, drop: $parent.dropped">
             <td class="text-center col-md-2">
                 <button class="btn btn-default" data-bind="visible: is_dir(), click:$parent.explore">
                     Go to directory
@@ -47,11 +83,12 @@
                 <a class="btn btn-default" data-bind="visible: !is_shared() && !is_dir(), click:$parent.downloadFile, attr: {href: link_url}">
                     Download file
                 </a>
-				<p data-bind="visible: is_shared()">
-					shared
-				</p>
+
+                <p data-bind="visible: is_shared()">
+                    shared
+                </p>
             </td>
-            <td class="text-center col-md-2" >
+            <td class="text-center col-md-2">
                 <button class="btn btn-default"
                         data-bind="visible: opensubtitles_hash(), click:$parent.downloadSubTitles">
                     Download subtitle
@@ -63,10 +100,13 @@
         </tr>
         </tbody>
     </table>
-</div>
+    </div>
 <footer>
-    using put.io api and <a href="http://www.opensubtitles.org/">Open Subtitles</a>
+    <div class="container">
+        <p>using put.io api and <a href="http://www.opensubtitles.org/">Open Subtitles</a></p>
+    </div>
 </footer>
+</div>
 <div class="modal fade" id="no_subtitles_modal">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -79,6 +119,47 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="loading">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title">loading</h4>
+            </div>
+            <div class="modal-body">
+                <p>loading modal because i'm lazy</p>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="create_folder_modal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title">Create a new folder</h4>
+            </div>
+            <div class="modal-body">
+                <form class="form-horizontal" data-bind="submit: createNewFolder">
+                    <div class="form-group">
+                        <label for="input_folder_name" class="col-sm-2 control-label">Folder name</label>
+
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="input_folder_name" value=""
+                                   data-bind="value: new_folder_name">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="col-sm-offset-2 col-sm-10">
+                            <button type="submit" class="btn btn-default">Save</button>
+                            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
