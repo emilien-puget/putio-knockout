@@ -3,7 +3,7 @@ $(function () {
         var access_token_url = window.location.hash.substr(1);
 
         if (access_token_url == '')
-            window.location = 'https://api.put.io/v2/oauth2/authenticate?client_id=1237&response_type=token&redirect_uri=http://obviouslair.com/putio/';
+            window.location = 'https://api.put.io/v2/oauth2/authenticate?client_id=1237&response_type=token&redirect_uri=http://putio.obviouslair.com';
 
         return access_token_url.split('=')[1];
     }
